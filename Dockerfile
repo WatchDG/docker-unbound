@@ -1,6 +1,9 @@
 FROM alpine:3
 
-RUN apk add --no-cache unbound ca-certificates drill && \
+RUN apk add --no-cache \
+    unbound \
+    ca-certificates \
+    drill && \
     update-ca-certificates
 
 RUN getent group unbound >/dev/null 2>&1 || addgroup -S unbound && \
