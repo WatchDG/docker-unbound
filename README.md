@@ -1,5 +1,9 @@
 # docker-unbound
 
+[![Docker Hub](https://img.shields.io/badge/Docker%20Hub-watchdg%2Funbound-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/watchdg/unbound)
+
+---
+
 Unbound is a lightweight caching recursive DNS resolver with DNSSEC and DNS-over-TLS support.
 
 ## Environment variables
