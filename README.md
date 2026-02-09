@@ -4,7 +4,7 @@
 
 ---
 
-Unbound is a lightweight caching recursive DNS resolver with DNSSEC and DNS-over-TLS support.
+Unbound is a lightweight caching recursive DNS resolver with DNS-over-TLS support.
 
 ## Environment variables
 
@@ -17,8 +17,6 @@ All options are optional; defaults are used when unset.
   - empty disables user/group switch inside Unbound
 - `UNBOUND__SERVER__DIRECTORY` (default: `/var/unbound`)
 - `UNBOUND__SERVER__CHROOT` (default: empty)
-- `UNBOUND__SERVER__AUTO_TRUST_ANCHOR_FILE` (default: `/var/unbound/root.key`)
-  - empty disables auto trust anchor generation
 - `UNBOUND__SERVER__INTERFACE` (default: `0.0.0.0`)
 - `UNBOUND__SERVER__DO_IP4` (default: `yes`)
 - `UNBOUND__SERVER__DO_IP6` (default: `no`)
@@ -27,15 +25,12 @@ All options are optional; defaults are used when unset.
 - `UNBOUND__SERVER__DO_NOT_QUERY_LOCALHOST` (default: `yes`)
 - `UNBOUND__SERVER__USE_CAPS_FOR_ID` (default: `yes`)
 - `UNBOUND__SERVER__PREFETCH` (default: `yes`)
-- `UNBOUND__SERVER__PREFETCH_KEY` (default: `yes`)
 - `UNBOUND__SERVER__QNAME_MINIMISATION` (default: `yes`)
 - `UNBOUND__SERVER__MINIMAL_RESPONSES` (default: `yes`)
 - `UNBOUND__SERVER__HIDE_IDENTITY` (default: `yes`)
 - `UNBOUND__SERVER__HIDE_VERSION` (default: `yes`)
 - `UNBOUND__SERVER__HARDEN_GLUE` (default: `yes`)
-- `UNBOUND__SERVER__HARDEN_DNSSEC_STRIPPED` (default: `yes`)
 - `UNBOUND__SERVER__HARDEN_REFERRAL_PATH` (default: `yes`)
-- `UNBOUND__SERVER__HARDEN_ALGO_DOWNGRADE` (default: `yes`)
 - `UNBOUND__SERVER__NUM_THREADS` (default: `2`)
 - `UNBOUND__SERVER__SO_RCVBUF` (default: `0`)
 - `UNBOUND__SERVER__SO_SNDBUF` (default: `0`)
