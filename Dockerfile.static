@@ -26,8 +26,6 @@ RUN apk add --no-cache \
     update-ca-certificates
 
 WORKDIR /tmp
-# RUN wget -q https://nlnetlabs.nl/downloads/unbound/unbound-${UNBOUND_VERSION}.tar.gz && \
-#     tar xzf unbound-${UNBOUND_VERSION}.tar.gz
 COPY unbound-${UNBOUND_VERSION}.tar.gz .
 RUN tar xzf unbound-${UNBOUND_VERSION}.tar.gz
 
@@ -56,20 +54,27 @@ RUN ./configure \
     LDFLAGS="-static -Wl,--gc-sections -Wl,-s" && \
     make -j$(nproc) && \
     make install DESTDIR=/tmp/unbound-install && \
-#    strip -s /tmp/unbound-install/usr/sbin/unbound /tmp/unbound-install/usr/sbin/unbound-anchor && \
-#    upx --best --lzma /tmp/unbound-install/usr/sbin/unbound /tmp/unbound-install/usr/sbin/unbound-anchor
     strip -s /tmp/unbound-install/usr/sbin/unbound && \
     upx --best --lzma /tmp/unbound-install/usr/sbin/unbound
 
-FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS builder-go
+FROM --platform=$BUILDPLATFORM watchdg/zig:v0.15.2 AS builder-zig
 ARG TARGETOS
 ARG TARGETARCH
 WORKDIR /build
-COPY unbound-go.go .
-RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
-  -a -installsuffix cgo -trimpath \
-  -ldflags '-s -w -extldflags "-static"' \
-  -o /unbound-go unbound-go.go
+COPY unbound-zig.zig .
+RUN case "${TARGETARCH}" in \
+    amd64) ARCH="x86_64" ;; \
+    arm64) ARCH="aarch64" ;; \
+    *) ARCH="${TARGETARCH}" ;; \
+    esac && \
+    zig build-exe \
+        unbound-zig.zig \
+        -O ReleaseSmall \
+        -target ${ARCH}-${TARGETOS}-musl \
+        -lc \
+        -fstrip \
+        --name unbound-zig && \
+    cp unbound-zig /unbound-zig
 
 FROM --platform=$BUILDPLATFORM alpine:3 AS scratch-prepare
 RUN echo "unbound:x:1000:1000:unbound user:/:/sbin/nologin" > /etc/passwd && \
@@ -79,11 +84,10 @@ FROM scratch
 COPY --from=scratch-prepare /etc/passwd /etc/passwd
 COPY --from=scratch-prepare /etc/group /etc/group
 COPY --from=builder /tmp/unbound-install/usr/sbin/unbound /usr/sbin/unbound
-# COPY --from=builder /tmp/unbound-install/usr/sbin/unbound-anchor /usr/sbin/unbound-anchor
-COPY --from=builder-go /unbound-go /unbound-go
+COPY --from=builder-zig /unbound-zig /unbound-zig
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY unbound/unbound.conf /etc/unbound/unbound.conf.template
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 ENV SSL_CERT_DIR=/etc/ssl/certs
 EXPOSE 5353/udp 5353/tcp
-ENTRYPOINT ["/unbound-go"]
+ENTRYPOINT ["/unbound-zig"]
