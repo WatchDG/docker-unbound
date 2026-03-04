@@ -78,16 +78,20 @@ RUN case "${TARGETARCH}" in \
 
 FROM --platform=$BUILDPLATFORM alpine:3 AS scratch-prepare
 RUN echo "unbound:x:1000:1000:unbound user:/:/sbin/nologin" > /etc/passwd && \
-    echo "unbound:x:1000:" > /etc/group
+    echo "unbound:x:1000:" > /etc/group && \
+    mkdir -p /etc/unbound /var/unbound 
 
 FROM scratch
 COPY --from=scratch-prepare /etc/passwd /etc/passwd
 COPY --from=scratch-prepare /etc/group /etc/group
-COPY --from=builder /tmp/unbound-install/usr/sbin/unbound /usr/sbin/unbound
-COPY --from=builder-zig /unbound-zig /unbound-zig
+COPY --from=scratch-prepare --chown=1000:1000 /etc/unbound /etc/unbound
+COPY --from=scratch-prepare --chown=1000:1000 /var/unbound /var/unbound
+COPY --from=builder --chown=1000:1000 /tmp/unbound-install/usr/sbin/unbound /usr/sbin/unbound
+COPY --from=builder-zig --chown=1000:1000 /unbound-zig /unbound-zig
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY unbound/unbound.conf /etc/unbound/unbound.conf.template
+COPY --chown=1000:1000 unbound/unbound.conf /etc/unbound/unbound.conf.template
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 ENV SSL_CERT_DIR=/etc/ssl/certs
+USER unbound
 EXPOSE 5353/udp 5353/tcp
 ENTRYPOINT ["/unbound-zig"]
